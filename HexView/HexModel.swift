@@ -6,6 +6,7 @@
 //
 
 import AppKit
+import SwiftUI
 
 enum ModelError: Error {
     case resourceAccess
@@ -177,5 +178,70 @@ class HexModel {
 
     private func charFrom(byte: UInt8) -> Character {
         (byte > 31 && byte < 128) ? Character(UnicodeScalar(byte)) : "."
+    }
+
+    func keyPress(
+        key: KeyEquivalent,
+        position: ScrollPosition
+    ) -> CGPoint {
+        let contentH = scrollGeometry?.contentSize.height ?? 0
+        let insetsH =
+            (scrollGeometry?.contentInsets.top ?? 0)
+            + (scrollGeometry?.contentInsets.bottom ?? 0)
+        let visibleH = scrollGeometry?.visibleRect.height ?? 0
+        let maxOffsetY = contentH + insetsH - visibleH
+
+        let contentW = scrollGeometry?.contentSize.width ?? 0
+        let insetsW =
+            (scrollGeometry?.contentInsets.leading ?? 0)
+            + (scrollGeometry?.contentInsets.trailing ?? 0)
+        let visibleW = scrollGeometry?.visibleRect.width ?? 0
+        let maxOffsetX = contentW + insetsW - visibleW
+        
+        var point = position.point ?? scrollGeometry?.contentOffset ?? .zero
+        if position.point == nil {
+            point.y += insetsH
+        }
+
+        switch key {
+        case .upArrow:
+            point.y -= cBox.height
+        case .downArrow:
+            point.y += cBox.height
+        case .leftArrow:
+            point.x -= cBox.width
+        case .rightArrow:
+            point.x += cBox.width
+        case .pageUp:
+            point.y -= visibleH
+        case .pageDown:
+            point.y += visibleH
+        case .home:
+            point.y = 0
+        case .end:
+            point.y = maxOffsetY
+        default:
+            return point
+        }
+
+        if point.y < 0 {
+            point.y = 0
+        } else if point.y > maxOffsetY {
+            point.y = maxOffsetY
+        }
+
+        if point.x < 0 {
+            point.x = 0
+        } else if point.x > maxOffsetX {
+            point.x = maxOffsetX
+        }
+
+        return point
+    }
+
+    private var scrollGeometry: ScrollGeometry?
+
+    func scrollGeometryChanged(_ geometry: ScrollGeometry) {
+        scrollGeometry = geometry
     }
 }
