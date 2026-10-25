@@ -36,7 +36,9 @@ class HexView: NSView {
         for string in strings {
             let attrString = NSAttributedString(
                 string: string,
-                attributes: [.font: model.viewFont]
+                attributes: [
+                    .font: model.viewFont, .foregroundColor: NSColor.textColor,
+                ]
             )
             y -= model.cBox.height
             attrString.draw(at: CGPoint(x: 0, y: y))
