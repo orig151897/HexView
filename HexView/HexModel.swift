@@ -14,6 +14,8 @@ enum ModelError: Error {
 }
 
 class HexModel {
+    var fileOpened = false
+    
     private var bookmark: Data?
     private var fileContents: Data?
 
@@ -32,6 +34,8 @@ class HexModel {
     )
     var viewHeight: CGFloat = 0
     var viewWidth: CGFloat = 0
+
+    private var scrollGeometry: ScrollGeometry?
 
     func openURL(_ url: URL) throws {
         guard url.startAccessingSecurityScopedResource() else {
@@ -184,23 +188,29 @@ class HexModel {
         key: KeyEquivalent,
         position: ScrollPosition
     ) -> CGPoint {
-        let contentH = scrollGeometry?.contentSize.height ?? 0
-        let insetsH =
-            (scrollGeometry?.contentInsets.top ?? 0)
-            + (scrollGeometry?.contentInsets.bottom ?? 0)
-        let visibleH = scrollGeometry?.visibleRect.height ?? 0
-        let maxOffsetY = contentH + insetsH - visibleH
+        var contentSize = CGSize.zero
+        var contentInsets = EdgeInsets()
+        var visibleRect = CGRect.zero
+        var containerSize = CGSize.zero
 
-        let contentW = scrollGeometry?.contentSize.width ?? 0
-        let insetsW =
-            (scrollGeometry?.contentInsets.leading ?? 0)
-            + (scrollGeometry?.contentInsets.trailing ?? 0)
-        let visibleW = scrollGeometry?.visibleRect.width ?? 0
-        let maxOffsetX = contentW + insetsW - visibleW
-        
+        if let scrollGeometry {
+            contentSize = scrollGeometry.contentSize
+            contentInsets = scrollGeometry.contentInsets
+            visibleRect = scrollGeometry.visibleRect
+            containerSize = scrollGeometry.containerSize
+        }
+
+        let maxOffsetX =
+            contentSize.width + contentInsets.leading + contentInsets.trailing
+            - visibleRect.width
+        let maxOffsetY =
+            contentSize.height + contentInsets.top + contentInsets.bottom
+            - visibleRect.height
+
         var point = position.point ?? scrollGeometry?.contentOffset ?? .zero
         if position.point == nil {
-            point.y += insetsH
+            point.x += contentInsets.leading + contentInsets.trailing
+            point.y += contentInsets.top + contentInsets.bottom
         }
 
         switch key {
@@ -213,9 +223,19 @@ class HexModel {
         case .rightArrow:
             point.x += cBox.width
         case .pageUp:
-            point.y -= visibleH
+            point.y -= CGFloat(
+                Things.smallestOf(
+                    x: Int(containerSize.height),
+                    divisibleBy: Int(cBox.height)
+                )
+            )
         case .pageDown:
-            point.y += visibleH
+            point.y += CGFloat(
+                Things.smallestOf(
+                    x: Int(containerSize.height),
+                    divisibleBy: Int(cBox.height)
+                )
+            )
         case .home:
             point.y = 0
         case .end:
@@ -224,22 +244,18 @@ class HexModel {
             return point
         }
 
-        if point.y < 0 {
-            point.y = 0
-        } else if point.y > maxOffsetY {
-            point.y = maxOffsetY
-        }
-
         if point.x < 0 {
             point.x = 0
         } else if point.x > maxOffsetX {
             point.x = maxOffsetX
         }
-
+        if point.y < 0 {
+            point.y = 0
+        } else if point.y > maxOffsetY {
+            point.y = maxOffsetY
+        }
         return point
     }
-
-    private var scrollGeometry: ScrollGeometry?
 
     func scrollGeometryChanged(_ geometry: ScrollGeometry) {
         scrollGeometry = geometry

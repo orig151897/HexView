@@ -10,20 +10,19 @@ import UniformTypeIdentifiers
 
 struct ContentView: View {
     private let model = HexModel()
-    private let view = HexView()
 
-    @State private var position = ScrollPosition(point: .zero)
+    @State private var scrollWhere = ScrollPosition(point: .zero)
 
     @Binding var openFileMenuItemSelected: Bool
 
     var body: some View {
         ScrollView([.horizontal, .vertical]) {
-            RepresentedHexView(model: model, view: view)
+            RepresentedHexView(model: model)
                 .frame(width: model.viewWidth, height: model.viewHeight)
                 .padding()
         }
         .defaultScrollAnchor(.topLeading)
-        .scrollPosition($position)
+        .scrollPosition($scrollWhere)
         .fileImporter(
             isPresented: $openFileMenuItemSelected,
             allowedContentTypes: [.data]
@@ -32,7 +31,8 @@ struct ContentView: View {
             case .success(let url):
                 do {
                     try model.openURL(url)
-                    view.needsDisplay = true
+                    // Reset the scroll position after a new file is loaded.
+                    scrollWhere = ScrollPosition(point: .zero)
                 } catch {
                     print("HexView: \(error)")
                 }
@@ -44,46 +44,49 @@ struct ContentView: View {
         .focusable()
         .focusEffectDisabled()
         .onKeyPress(.downArrow) {
-            position.scrollTo(
-                point: model.keyPress(key: .downArrow, position: position)
+            scrollWhere.scrollTo(
+                point: model.keyPress(key: .downArrow, position: scrollWhere)
             )
             return .handled
         }
         .onKeyPress(.upArrow) {
-            position.scrollTo(
-                point: model.keyPress(key: .upArrow, position: position)
+            scrollWhere.scrollTo(
+                point: model.keyPress(key: .upArrow, position: scrollWhere)
             )
             return .handled
         }
         .onKeyPress(.leftArrow) {
-            position.scrollTo(
-                point: model.keyPress(key: .leftArrow, position: position)
+            scrollWhere.scrollTo(
+                point: model.keyPress(key: .leftArrow, position: scrollWhere)
             )
             return .handled
         }
         .onKeyPress(.rightArrow) {
-            position.scrollTo(
-                point: model.keyPress(key: .rightArrow, position: position)
+            scrollWhere.scrollTo(
+                point: model.keyPress(
+                    key: .rightArrow,
+                    position: scrollWhere
+                )
             )
             return .handled
         }
         .onKeyPress(.pageDown) {
-            position.scrollTo(
-                point: model.keyPress(key: .pageDown, position: position)
+            scrollWhere.scrollTo(
+                point: model.keyPress(key: .pageDown, position: scrollWhere)
             )
             return .handled
         }
         .onKeyPress(.pageUp) {
-            position.scrollTo(
-                point: model.keyPress(key: .pageUp, position: position)
+            scrollWhere.scrollTo(
+                point: model.keyPress(key: .pageUp, position: scrollWhere)
             )
             return .handled
         }
         .onKeyPress(
             .home,
             action: {
-                position.scrollTo(
-                    point: model.keyPress(key: .home, position: position)
+                scrollWhere.scrollTo(
+                    point: model.keyPress(key: .home, position: scrollWhere)
                 )
                 return .handled
             }
@@ -91,8 +94,8 @@ struct ContentView: View {
         .onKeyPress(
             .end,
             action: {
-                position.scrollTo(
-                    point: model.keyPress(key: .end, position: position)
+                scrollWhere.scrollTo(
+                    point: model.keyPress(key: .end, position: scrollWhere)
                 )
                 return .handled
             }
@@ -102,7 +105,7 @@ struct ContentView: View {
             return false
         } action: { oldValue, newValue in
         }
-        .animation(.default, value: position)
+        // .animation(.default, value: position)
     }
 }
 

@@ -17,7 +17,6 @@ struct HexViewApp: App {
         }
         .commands {
             CommandGroup(after: .newItem) {
-                // Команда меню Open появится под New Window в меню File
                 Button("Open...") {
                     openFileMenuItemSelected = true
                 }

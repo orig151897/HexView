@@ -30,25 +30,9 @@
             filePath = "HexView/RepresentedHexView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "20"
-            endingLineNumber = "20"
-            landmarkName = "RepresentedHexView"
-            landmarkType = "14">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "B654D681-B0C5-48CB-A86B-50B6AB6A7C14"
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "HexView/HexModel.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "193"
-            endingLineNumber = "193"
-            landmarkName = "keyPress(key:position:)"
+            startingLineNumber = "18"
+            endingLineNumber = "18"
+            landmarkName = "makeNSView(context:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

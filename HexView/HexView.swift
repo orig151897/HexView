@@ -8,9 +8,10 @@
 import AppKit
 
 class HexView: NSView {
-    var model: HexModel?
+    private var model: HexModel
 
-    init() {
+    init(model: HexModel) {
+        self.model = model
         super.init(frame: .zero)
     }
 
@@ -19,11 +20,6 @@ class HexView: NSView {
     }
 
     override func draw(_ dirtyRect: NSRect) {
-        guard let model, !model.cBox.isEmpty else {
-            NSEraseRect(bounds)
-            return
-        }
-
         let strings = model.getHexStrings(for: dirtyRect)
         if strings.isEmpty {
             NSEraseRect(bounds)

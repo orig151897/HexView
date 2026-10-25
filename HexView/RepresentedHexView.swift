@@ -9,13 +9,11 @@ import SwiftUI
 
 struct RepresentedHexView: NSViewRepresentable {
     let model: HexModel
-    let view: HexView
 
     typealias NSViewType = HexView
 
     func makeNSView(context: Context) -> NSViewType {
-        view.model = model
-        return view
+        HexView(model: model)
     }
 
     func updateNSView(_ nsView: NSViewType, context: Context) {
