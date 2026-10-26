@@ -7,12 +7,16 @@
 
 import SwiftUI
 import UniformTypeIdentifiers
+import os
 
 struct ContentView: View {
     private let model = HexModel()
 
     @State private var menuModel = MenuModel()
     @State private var scrollWhere = ScrollPosition(point: .zero)
+
+    @State private var savedError: Error?
+    @State private var openFileFailed = false
 
     var body: some View {
         ScrollView([.horizontal, .vertical]) {
@@ -34,13 +38,20 @@ struct ContentView: View {
                     NSApplication.shared.mainWindow?.setTitleWithRepresentedFilename(url.path(percentEncoded: false))
                     scrollWhere = ScrollPosition(point: .zero)
                 } catch {
-                    print("HexView: \(error)")
+                    logger.error("\(error)")
+                    savedError = error
+                    openFileFailed = true
                 }
 
             case .failure(let error):
-                print(error)
+                logger.error("\(error)")
             }
         }
+        .alert(savedError?.localizedDescription ?? "Unknown error", isPresented: $openFileFailed, actions: {
+            Button("Dismiss") {
+                savedError = nil
+            }
+        })
         .focusable()
         .focusEffectDisabled()
         .onKeyPress(.downArrow) {

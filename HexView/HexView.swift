@@ -6,6 +6,7 @@
 //
 
 import AppKit
+import os
 
 class HexView: NSView {
     private var model: HexModel
@@ -16,6 +17,7 @@ class HexView: NSView {
     }
 
     required init?(coder: NSCoder) {
+        logger.critical("init(coder:) has not been implemented")
         fatalError("init(coder:) has not been implemented")
     }
 
