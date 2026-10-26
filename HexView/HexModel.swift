@@ -8,13 +8,7 @@
 import AppKit
 import SwiftUI
 
-enum ModelError: Error {
-    case resourceAccess
-    case missingURL
-}
-
 class HexModel {
-    private var bookmark: Data?
     private var fileContents: Data?
 
     private var totalLines = 0
@@ -37,23 +31,17 @@ class HexModel {
 
     func openURL(_ url: URL) throws {
         guard url.startAccessingSecurityScopedResource() else {
-            throw ModelError.resourceAccess
+            throw HexError.resourceAccess
         }
 
         defer {
             url.stopAccessingSecurityScopedResource()
         }
 
-        bookmark = try url.bookmarkData(options: .withSecurityScope)
-
-        try readFileContents()
+        try readFileContents(from: url)
     }
 
-    private func readFileContents() throws {
-        guard let url = try resolveBookmark() else {
-            throw ModelError.missingURL
-        }
-
+    private func readFileContents(from url: URL) throws {
         fileContents = try Data(contentsOf: url)
 
         cBox = NSAttributedString(
@@ -70,24 +58,6 @@ class HexModel {
 
         contentWidth = CGFloat(charsPerLine) * cBox.width
         contentHeight = CGFloat(totalLines) * cBox.height
-    }
-
-    private func resolveBookmark() throws -> URL? {
-        if bookmark == nil {
-            return nil
-        }
-
-        var isStale = false
-        let url = try URL(
-            resolvingBookmarkData: bookmark!,
-            options: .withSecurityScope,
-            relativeTo: nil,
-            bookmarkDataIsStale: &isStale
-        )
-        if isStale {
-            bookmark = try url.bookmarkData(options: .withSecurityScope)
-        }
-        return url
     }
 
     private var charsPerLine: Int {

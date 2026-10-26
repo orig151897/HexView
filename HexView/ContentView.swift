@@ -52,6 +52,7 @@ struct ContentView: View {
                 savedError = nil
             }
         })
+        .fileDialogBrowserOptions([.enumeratePackages, .includeHiddenFiles])
         .focusable()
         .focusEffectDisabled()
         .onKeyPress(.downArrow) {
