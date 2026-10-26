@@ -18,7 +18,7 @@ struct ContentView: View {
         ScrollView([.horizontal, .vertical]) {
             RepresentedHexView(model: model)
                 .frame(width: model.contentWidth, height: model.contentHeight)
-                .padding()
+                .padding([.leading, .trailing, .bottom])
         }
         .defaultScrollAnchor(.topLeading)
         .scrollPosition($scrollWhere)
@@ -31,6 +31,7 @@ struct ContentView: View {
             case .success(let url):
                 do {
                     try model.openURL(url)
+                    NSApplication.shared.mainWindow?.setTitleWithRepresentedFilename(url.path(percentEncoded: false))
                     scrollWhere = ScrollPosition(point: .zero)
                 } catch {
                     print("HexView: \(error)")
