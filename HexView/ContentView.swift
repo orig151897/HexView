@@ -11,27 +11,26 @@ import UniformTypeIdentifiers
 struct ContentView: View {
     private let model = HexModel()
 
+    @State private var menuModel = MenuModel()
     @State private var scrollWhere = ScrollPosition(point: .zero)
-
-    @Binding var openFileMenuItemSelected: Bool
 
     var body: some View {
         ScrollView([.horizontal, .vertical]) {
             RepresentedHexView(model: model)
-                .frame(width: model.viewWidth, height: model.viewHeight)
+                .frame(width: model.contentWidth, height: model.contentHeight)
                 .padding()
         }
         .defaultScrollAnchor(.topLeading)
         .scrollPosition($scrollWhere)
+        .focusedSceneValue(menuModel)
         .fileImporter(
-            isPresented: $openFileMenuItemSelected,
+            isPresented: $menuModel.fileOpen,
             allowedContentTypes: [.data]
         ) { result in
             switch result {
             case .success(let url):
                 do {
                     try model.openURL(url)
-                    // Reset the scroll position after a new file is loaded.
                     scrollWhere = ScrollPosition(point: .zero)
                 } catch {
                     print("HexView: \(error)")
@@ -100,15 +99,16 @@ struct ContentView: View {
                 return .handled
             }
         )
+        // The sole purpose of this is to track SwiftUI's scrolling
+        // position changes which happen when the user scrolls with mouse.
         .onScrollGeometryChange(for: Bool.self) { geometry in
             model.scrollGeometryChanged(geometry)
             return false
-        } action: { oldValue, newValue in
+        } action: { _, _ in
         }
-        // .animation(.default, value: position)
     }
 }
 
 #Preview {
-    ContentView(openFileMenuItemSelected: Binding.constant(false))
+    ContentView()
 }

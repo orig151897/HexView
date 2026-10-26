@@ -14,8 +14,6 @@ enum ModelError: Error {
 }
 
 class HexModel {
-    var fileOpened = false
-    
     private var bookmark: Data?
     private var fileContents: Data?
 
@@ -32,8 +30,8 @@ class HexModel {
         ofSize: NSFont.systemFontSize,
         weight: .regular
     )
-    var viewHeight: CGFloat = 0
-    var viewWidth: CGFloat = 0
+    var contentHeight: CGFloat = 0
+    var contentWidth: CGFloat = 0
 
     private var scrollGeometry: ScrollGeometry?
 
@@ -51,6 +49,29 @@ class HexModel {
         try readFileContents()
     }
 
+    private func readFileContents() throws {
+        guard let url = try resolveBookmark() else {
+            throw ModelError.missingURL
+        }
+
+        fileContents = try Data(contentsOf: url)
+
+        cBox = NSAttributedString(
+            string: "F",
+            attributes: [.font: viewFont]
+        )
+        .boundingRect(with: .zero)
+
+        totalLines = Things.greatestOf(
+            x: fileContents!.count,
+            divisibleBy: bytesPerLine
+        )
+        / bytesPerLine
+
+        contentWidth = CGFloat(charsPerLine) * cBox.width
+        contentHeight = CGFloat(totalLines) * cBox.height
+    }
+
     private func resolveBookmark() throws -> URL? {
         if bookmark == nil {
             return nil
@@ -63,53 +84,45 @@ class HexModel {
             relativeTo: nil,
             bookmarkDataIsStale: &isStale
         )
-
         if isStale {
             bookmark = try url.bookmarkData(options: .withSecurityScope)
         }
-
         return url
     }
 
     private var charsPerLine: Int {
-        charsPerAddress + spaceAfterAddress
-            + (bytesPerLine * charsPerByte + (bytesPerLine - 1)) + spaceAfterHex
+        charsPerAddress
+            + spaceAfterAddress
+            + (bytesPerLine * charsPerByte + (bytesPerLine - 1))
+            + spaceAfterHex
             + bytesPerLine
     }
 
-    private func readFileContents() throws {
-        guard let url = try resolveBookmark() else {
-            throw ModelError.missingURL
+    func getHexLines(for region: NSRect) -> [NSAttributedString] {
+        guard let fileContents else {
+            return []
         }
 
-        fileContents = try Data(contentsOf: url)
+        // The region may contain nonvisible area. Make sure we
+        // get indices that represent the real file's data.
+        let bottomLine = min(
+            indexOfLineWithOriginAt(y: originOfLineDownYAxes(region.origin.y)),
+            totalLines - 1
+        )
+        let topLine = indexOfLineWithOriginAt(
+            y: originOfLineUpYAxes(region.origin.y + region.height)
+        )
+        if bottomLine < topLine {
+            return []
+        }
 
-        cBox = NSAttributedString(
-            string: "F",
-            attributes: [.font: viewFont]
-        ).boundingRect(with: .zero)
-
-        totalLines =
-            Things.greatestOf(x: fileContents!.count, divisibleBy: bytesPerLine)
-            / bytesPerLine
-
-        viewWidth = CGFloat(charsPerLine) * cBox.width
-        viewHeight = CGFloat(totalLines) * cBox.height
-    }
-
-    func originOfLineDownYAxes(_ y: CGFloat) -> Int {
-        var yy = Int(y)
-        let ch = Int(cBox.height)
-        yy = Things.smallestOf(x: yy, divisibleBy: ch)
-        return max(yy, 0)
-    }
-
-    func originOfLineUpYAxes(_ y: CGFloat) -> Int {
-        var yy = Int(y)
-        let ch = Int(cBox.height)
-        let vh = Int(viewHeight)
-        yy = Things.greatestOf(x: yy, divisibleBy: ch)
-        return min(yy, vh)
+        var lines: [NSAttributedString] = []
+        for i in topLine...bottomLine {
+            if let line = getLine(i, fileContents) {
+                lines.append(line)
+            }
+        }
+        return lines
     }
 
     private func indexOfLineWithOriginAt(y: Int) -> Int {
@@ -117,39 +130,34 @@ class HexModel {
         return totalLines - (y / ch)
     }
 
-    func getHexStrings(for region: NSRect) -> [String] {
-        guard let fileContents else {
-            return []
-        }
+    func originOfLineUpYAxes(_ y: CGFloat) -> Int {
+        var yy = Int(y)
+        let ch = Int(cBox.height)
+        let vh = Int(contentHeight)
+        yy = Things.greatestOf(x: yy, divisibleBy: ch)
+        return min(yy, vh)
+    }
 
-        let bottomLine = indexOfLineWithOriginAt(
-            y: originOfLineDownYAxes(region.origin.y)
+    private func originOfLineDownYAxes(_ y: CGFloat) -> Int {
+        var yy = Int(y)
+        let ch = Int(cBox.height)
+        yy = Things.smallestOf(x: yy, divisibleBy: ch)
+        return max(yy, 0)
+    }
+
+    private func getLine(_ index: Int, _ data: Data) -> NSAttributedString? {
+        let offset = index * bytesPerLine
+        let count = min(bytesPerLine, data.count - offset)
+
+        let line = buildLine(offset: offset, count: count, data: data)
+
+        let attrLine = NSAttributedString(
+            string: line,
+            attributes: [
+                .font: viewFont, .foregroundColor: NSColor.textColor,
+            ]
         )
-        let topLine = indexOfLineWithOriginAt(
-            y: originOfLineUpYAxes(region.origin.y + region.height)
-        )
-
-        let nBytes = max((bottomLine - topLine + 1) * bytesPerLine, 0)
-
-        // "Forms" the half-open range of bytes firstByte..<lastByte
-        let firstByte = topLine * bytesPerLine
-        let lastByte = min(firstByte + nBytes, fileContents.count)
-
-        var strings: [String] = []
-
-        var offset = firstByte
-        while offset < lastByte {
-            let nextOffset = offset + bytesPerLine
-            let count = nextOffset - offset - max(nextOffset - lastByte, 0)
-
-            strings.append(
-                buildLine(offset: offset, count: count, data: fileContents)
-            )
-
-            offset = nextOffset
-        }
-
-        return strings
+        return attrLine
     }
 
     private func buildLine(offset: Int, count: Int, data: Data) -> String {

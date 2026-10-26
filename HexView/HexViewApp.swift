@@ -9,19 +9,12 @@ import SwiftUI
 
 @main
 struct HexViewApp: App {
-    @State private var openFileMenuItemSelected = false
-
     var body: some Scene {
         WindowGroup {
-            ContentView(openFileMenuItemSelected: $openFileMenuItemSelected)
+            ContentView()
         }
         .commands {
-            CommandGroup(after: .newItem) {
-                Button("Open...") {
-                    openFileMenuItemSelected = true
-                }
-                .keyboardShortcut("O")
-            }
+            MenuCommands()
         }
     }
 }

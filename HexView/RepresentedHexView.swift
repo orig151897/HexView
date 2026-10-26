@@ -17,6 +17,5 @@ struct RepresentedHexView: NSViewRepresentable {
     }
 
     func updateNSView(_ nsView: NSViewType, context: Context) {
-        print("updateNSView")
     }
 }

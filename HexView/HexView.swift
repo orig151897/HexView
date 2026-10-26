@@ -20,8 +20,8 @@ class HexView: NSView {
     }
 
     override func draw(_ dirtyRect: NSRect) {
-        let strings = model.getHexStrings(for: dirtyRect)
-        if strings.isEmpty {
+        let lines = model.getHexLines(for: dirtyRect)
+        if lines.isEmpty {
             NSEraseRect(bounds)
             return
         }
@@ -29,19 +29,9 @@ class HexView: NSView {
         var y = CGFloat(
             model.originOfLineUpYAxes(dirtyRect.origin.y + dirtyRect.height)
         )
-        for string in strings {
-            let attrString = NSAttributedString(
-                string: string,
-                attributes: [
-                    .font: model.viewFont, .foregroundColor: NSColor.textColor,
-                ]
-            )
+        for line in lines {
             y -= model.cBox.height
-            attrString.draw(at: CGPoint(x: 0, y: y))
+            line.draw(at: CGPoint(x: 0, y: y))
         }
-    }
-
-    override func keyDown(with event: NSEvent) {
-        print(event)
     }
 }
